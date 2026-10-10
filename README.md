@@ -83,11 +83,17 @@ plugin_manager: action = install_bundle, target = D:\code\dsh-zh-reminder
 
 这样即使同一轮内多次经过 `pre-step`，也不会重复注入同一条提醒；不需要额外写事件，也不需要轮询。
 
+投影单元还带了 `stateSchema`：注册表在会话从持久化检查点恢复时会**无条件**调用 `stateSchema.parse(row.val)`，缺这个字段会让会话无法重开。本插件用最小的鸭子类型实现它（不引入 schemastery），把检查点里的值收敛成合法状态，坏值回落默认而不抛错。
+
 ## 自检
 
 ```powershell
-npm test          # 20 个单元/流程用例：检测内核 + 投影折叠 + pre-step 注入
+npm test          # 22 个用例：检测内核 + 投影折叠 + pre-step 注入 + 注册表契约
 npm run probe     # 清单、入口、patch 文件与零依赖自检
+
+# 可选：用真实的 session-projection 注册表复核投影单元契约，
+# 需要指向一个从 app.asar 解包出来的 dsh 依赖目录（profile 里没有 @deepseek-ai）
+node probe/registry-check.mjs <解包目录>/app/dsh/node_modules
 ```
 
 ## 目录结构
@@ -103,7 +109,8 @@ dsh-zh-reminder/
 │   ├── detect.test.js
 │   └── plugin.test.js
 └── probe/
-    └── check.mjs         # 安装前自检
+    ├── check.mjs         # 安装前自检
+    └── registry-check.mjs # 真实注册表契约复核（可选）
 ```
 
 ## 许可
