@@ -15,6 +15,8 @@
 
 ## 安装
 
+### 方式一：会话内安装（推荐）
+
 在 dsh 会话里安装（`target` 传本包的绝对路径）：
 
 ```
@@ -24,6 +26,18 @@ plugin_manager: action = install_bundle, target = D:\code\dsh-zh-reminder
 安装后 `application` 变为 `applied` 即生效；用 `cordis_inspect_query` 可以看到新插入的行。
 
 > 注意：**替换已安装的同名包需要重启 dsh** 才会加载新的 JS 模块代；首次装入一个新 bundle 可以由 HMR 直接激活。
+
+### 方式二：本地 link 装入（开发时用）
+
+包本体留在工作区，profile 里只是一条 Junction 链接，改代码后重启即生效：
+
+1. 在 profile 的 `package.json` 的 `dependencies` 里加一行 `"dsh-zh-reminder": "link:D:/code/dsh-zh-reminder"`；
+2. 用 dsh 自带 CLI 安装依赖（不要在 profile 目录直接跑 pnpm）：
+   `dsh plugin --profile desktop install`；
+3. 在 profile 的 `cordis.patch.yml` 里插入插件行，内容可直接抄本包的 `cordis.patch.yml`。
+
+`D:\Program Files\DSH Desktop` 之类的旧路径脚本已经失效，当前桌面版装在
+`%LOCALAPPDATA%\Programs\DeepSeek Harness`，重启要杀 `DeepSeek Harness.exe` 那一棵树。
 
 ## 配置
 

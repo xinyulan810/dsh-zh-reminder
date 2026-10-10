@@ -36,6 +36,10 @@ function createHarness() {
     apply(ctx, {});
 
     return {
+        /** 注册给 sessionProjections 的原始定义，用于断言注册表契约。 */
+        get definition() {
+            return definition;
+        },
         /** 驱动一个会话事件，返回 fold 后的新状态。 */
         tick(event) {
             state = definition.apply(state, event);
@@ -189,4 +193,27 @@ test('提醒消息结构可被框架识别', async () => {
     assert.ok(message.content[0].text.includes('中文'));
     assert.equal(message.source.plugin, 'dsh-zh-reminder');
     assert.equal(message.source.form, 'snapshot');
+});
+
+test('投影单元的注册表契约完整（key / stateVersion / stateSchema）', () => {
+    const { definition } = createHarness();
+    assert.equal(definition.key, 'dsh-zh-reminder/state');
+    assert.ok(Number.isSafeInteger(definition.stateVersion) && definition.stateVersion >= 0);
+    assert.equal(typeof definition.init, 'function');
+    assert.equal(typeof definition.apply, 'function');
+    // 注册表在 restore 路径里会无条件调用 stateSchema.parse，缺了会让会话无法重开。
+    assert.equal(typeof definition.stateSchema?.parse, 'function');
+});
+
+test('stateSchema 会把持久化状态收敛成合法值，坏值回落默认而不抛错', () => {
+    const { parse } = createHarness().definition.stateSchema;
+    const full = { turn: 3, step: 2, waitingStart: false, awaitingRepeat: true, repeatTurn: 2, repeatStep: 1 };
+    const empty = { turn: 0, step: 0, waitingStart: true, awaitingRepeat: false, repeatTurn: 0, repeatStep: 0 };
+
+    assert.deepEqual(parse(full), full);
+    assert.deepEqual(parse(undefined), empty);
+    assert.deepEqual(parse('nope'), empty);
+    assert.deepEqual(parse({ turn: -1, step: 1.5, awaitingRepeat: 'yes' }), empty);
+    // waitingStart 显式为 false 时必须保留，否则会话开头会重复提醒。
+    assert.equal(parse({ waitingStart: false }).waitingStart, false);
 });
