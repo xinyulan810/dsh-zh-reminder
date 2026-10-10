@@ -70,7 +70,11 @@ function assistantMessage(text, { turn, step, interrupted = false }) {
 function reminderOf(label) {
     return {
         type: 'user/message',
-        data: { role: 'user', content: [{ type: 'text', text: label }], source: { kind: 'plugin', plugin: 'dsh-zh-reminder', form: 'snapshot', sections: [{ name: label, text: label }] } },
+        data: {
+            role: 'user',
+            content: [{ type: 'text', text: label }],
+            source: { kind: 'plugin:dsh-zh-reminder', form: 'snapshot', sections: [{ name: label, text: label }] },
+        },
     };
 }
 
@@ -191,7 +195,9 @@ test('提醒消息结构可被框架识别', async () => {
     assert.ok(message.id.length > 0);
     assert.equal(message.content[0].type, 'text');
     assert.ok(message.content[0].text.includes('中文'));
-    assert.equal(message.source.plugin, 'dsh-zh-reminder');
+    // 会话格式 v4 只认「生产者自己的」kind：必须是 plugin:<包名>，且不能再带 plugin 字段。
+    assert.equal(message.source.kind, 'plugin:dsh-zh-reminder');
+    assert.equal('plugin' in message.source, false);
     assert.equal(message.source.form, 'snapshot');
 });
 
