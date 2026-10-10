@@ -1,0 +1,14 @@
+- insert:
+    - id: dsh-zh-reminder
+      name: 'dsh-zh-reminder'
+      config:
+        # 会话开头中文提醒文本（turn 1 / step 1 注入一次）
+        startReminder: '请始终使用简体中文思考和回答用户的问题，不要使用英文（代码、命令、专有名词除外）。'
+        # 逐段检测：单段文字的英文占比超过该比例即触发提醒
+        threshold: 0.8
+        # 单段最少字符数（低于该长度不判定，避免噪声误报）
+        minChars: 20
+        # 单段最少英文字母数（低于该数量不判定）
+        minLetters: 8
+        # 触发提醒后的冷却轮数（1 = 每轮最多提醒一次）
+        cooldown: 1

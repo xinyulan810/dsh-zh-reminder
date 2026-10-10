@@ -1,0 +1,23 @@
+{
+  "name": "dsh-zh-reminder",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "中文思考提醒：会话开头提醒用中文思考与回答，并在检测到回复中出现大段英文时再次提醒。",
+  "license": "MIT",
+  "exports": {
+    ".": "./lib/index.js"
+  },
+  "scripts": {
+    "test": "node --test test/detect.test.js test/plugin.test.js",
+    "probe": "node probe/check.mjs ./cordis.patch.yml ./package.json"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
