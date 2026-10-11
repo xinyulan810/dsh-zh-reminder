@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import { DEFAULTS, detectEnglish, measure, normalizeConfig, splitParagraphs, stripCode } from '../lib/detect.js';
 
@@ -78,6 +79,42 @@ test('空输入与非字符串输入安全返回', () => {
         assert.equal(hit.triggered, false);
         assert.equal(hit.scanned, 0);
     }
+});
+
+test('裸路径、键值赋值与包名列表不计入英文占比', () => {
+    const text = [
+        '这次先把 config\\actuallyadditions-common.toml 里的 doUpdateCheck = true 改成 false，',
+        '再把 commoncapabilities / cyclopscore / integrateddynamics / integratedtunnels 这几个',
+        '配置文件的 versionChecker = true 一起关掉，中文说明占据绝大多数内容，不该触发提醒。',
+    ].join('');
+    assert.equal(detectEnglish(text).triggered, false);
+    assert.equal(stripCode('config\\a\\b.cfg').includes('config'), false);
+    assert.equal(stripCode('doUpdateCheck = true').includes('doUpdateCheck'), false);
+    assert.equal(stripCode('a / b / c').includes('a'), false);
+});
+
+test('引号里引用的英文原文不计入英文占比', () => {
+    const text = [
+        '原文注释写的是 “Whether new blocks for the config should be fetched from the network.”，',
+        '以及 "the request timed out while contacting the update server"，',
+        '这些都只是引用，本段其余部分全部用中文写成，因此不应该被判定为英文段落。',
+    ].join('');
+    assert.equal(detectEnglish(text).triggered, false);
+});
+
+test('专有名词与英文术语夹在中文里不触发', () => {
+    const text = '日志里只有 Read timed out 与 Online mod data expired 两种痕迹，其余部分都是中文说明，长度也足够参与判定。';
+    assert.equal(detectEnglish(text).triggered, false);
+});
+
+test('回归：用户报告的技术说明样本不再被误判为英文', () => {
+    const sample = readFileSync(new URL('./fixtures/technical-chinese.txt', import.meta.url), 'utf8');
+    const hit = detectEnglish(sample);
+    assert.equal(hit.triggered, false, `ratio=${hit.ratio} scanned=${hit.scanned}`);
+});
+
+test('整段被引号包裹的英文也会被剔除（记录这一行为取舍）', () => {
+    assert.equal(detectEnglish(`"${PURE_ENGLISH}"`).triggered, false);
 });
 
 test('stripCode 与 splitParagraphs 的基本行为', () => {

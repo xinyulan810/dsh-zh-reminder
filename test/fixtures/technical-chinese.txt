@@ -1,0 +1,20 @@
+一、能在 config 里直接关掉（推荐）
+1. Xaero 三件套 —— 本次日志里唯一留下超时痕迹的联网，收益最确定
+
+config\xaero\lib\common.cfg → allow_internet_access = true 改成 false。这是 XaeroLib 总开关，一改就把 xaerolib 的 patreon 检查（本次 Read timed out）、xaeroworldmap 的版本检查（Online mod data expired）、xaerominimap 的版本检查（Read timed out）全部掐掉。
+只想留功能、只关提示的话，改这两个就够：
+config\xaero\minimap\client.cfg → update_notifications = true → false
+config\xaero\world-map\client.cfg → update_notifications = true → false
+代价：关掉总开关后，Xaero 的"服务器/局域网共享地图数据"功能会失效（单机游玩无影响）。
+2. cable_facades（本次启动从 GitHub 拉了白名单）
+
+config\cable_facades-common.toml → auto_update_config = true → false（原文注释："Whether new blocks for the config should be fetched from the network."）
+3. Actually Additions（本包实际是 ActuallySubtractions 那个 jar）
+
+config\actuallyadditions-common.toml → [other] 段里 doUpdateCheck = true、versionSpecificUpdateChecker = true → false
+4. Cyclops 系那一家子（8 个文件，都是 versionChecker = true） commoncapabilities / cyclopscore / everlastingabilities / evilcraft / integratedcrafting / integrateddynamics / integratedscripting / integratedterminals / integratedtunnels 的 *-common.toml。说句实话：这类检查是懒触发的，日志里没留下它们的请求记录，关掉是"消除偶发等待"的保险，收益不确定。
+
+5. Iron Furnaces
+
+config\ironfurnaces-client.toml → [updates.check_updates] updates = true → false（同文件 [misc.misc] web = false 已经关了）
+已经处于关闭状态的、不用管：config\fml.toml 的 versionCheck = false（Forge 全局版本检查）、config\titanbolt-common.toml 的 enableCpSatPlanner = false（这个一旦打开会在启动时下载 native 运行时，别开）。

@@ -58,15 +58,23 @@ plugin_manager: action = install_bundle, target = D:\code\dsh-zh-reminder
 ## 英文占比怎么算
 
 1. 去掉 fenced code block（``` / ~~~）与行内代码（`` ` ``）里的内容；
-2. 按空行把剩余正文切成自然段，段内换行折叠成空格；
-3. 每段的**分母只数有效字符**：英文字母、数字、CJK 汉字、假名、韩文；空白与标点不计入，避免英文空行或标点把比例摊薄；
-4. 分子是 ASCII 字母数。分子 / 分母 > `threshold` 即判定该段超标。
+2. 再剔除**非叙述性片段**——它们不是「自己在用英文说话」，只是中文技术回答里绕不开的记号：
+   文件路径与 URL、`key = value` / `key → value` 这类键值、`[section]` 段名、
+   `snake_case` 与 `camelCase`（含 `ActuallySubtractions`、`GitHub` 这类大驼峰）标识符、
+   `a / b / c` 这类包名列表，以及引号里的引用原文（中英文引号都算）；
+3. 按空行把剩余正文切成自然段，段内换行折叠成空格；
+4. 每段的**分母只数有效字符**：英文字母、数字、CJK 汉字、假名、韩文；空白与标点不计入，避免英文空行或标点把比例摊薄；
+5. 分子是 ASCII 字母数。分子 / 分母 > `threshold` 即判定该段超标。
 
 因此：
 
 - 「这是一段完全用中文写的说明，虽然长度足够但英文为零」→ 不触发；
-- 「这段主要在说中文，只是顺带出现几个专有名词」→ 不触发；
-- 整段英文（含代码块之外的技术说明）→ 触发。
+- 「这次先把 `config\actuallyadditions-common.toml` 里的 `doUpdateCheck = true` 改成 false」→ 不触发（路径与键值都不计入分子）；
+- 「原文注释写的是 "Whether new blocks for the config should be fetched from the network."」→ 不触发（引号里是引用原文，不算自己在用英文）；
+- 只夹杂少量专有名词与英文术语（`Read timed out`、`XaeroLib` 之类）→ 不触发；
+- 整段英文（代码块之外的技术说明、大段英文对话）→ 触发。
+
+> 取舍：引号里的内容一律不计入，所以**整段被引号包裹的英文也不会提醒**。中文回答里引用英文原文比「用引号说英文」常见得多，往这个方向偏更安全。
 
 ## 性能设计
 
@@ -90,7 +98,7 @@ plugin_manager: action = install_bundle, target = D:\code\dsh-zh-reminder
 ## 自检
 
 ```powershell
-npm test          # 22 个用例：检测内核 + 投影折叠 + pre-step 注入 + 注册表契约
+npm test          # 27 个用例：检测内核 + 投影折叠 + pre-step 注入 + 注册表契约
 npm run probe     # 清单、入口、patch 文件与零依赖自检
 
 # 可选：用真实官方实现复核两处最容易炸的契约。
@@ -110,7 +118,9 @@ dsh-zh-reminder/
 │   └── detect.js         # 纯函数检测内核与配置规范化
 ├── test/
 │   ├── detect.test.js
-│   └── plugin.test.js
+│   ├── plugin.test.js
+│   └── fixtures/
+│       └── technical-chinese.txt  # 误判回归样本（真实会话里截取的中文技术说明）
 └── probe/
     ├── check.mjs          # 安装前自检
     ├── registry-check.mjs # 真实注册表契约复核（可选）
